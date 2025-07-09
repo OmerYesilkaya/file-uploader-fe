@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchWithoutAuth } from "@/lib/utils";
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -19,8 +20,6 @@ interface AuthContextType {
     logout: () => void;
     isLoading: boolean;
 }
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,14 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await fetch(`${BASE_API}/auth/login`, {
+        const response = await fetchWithoutAuth(`/auth/login`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
             body: JSON.stringify({ email, password }),
         });
-
         const user: User = await response.json();
 
         setUser(user);
@@ -59,24 +54,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signup = async (name: string, email: string, password: string) => {
-        const response = await fetch(`${BASE_API}/auth/signup`, {
+        const response = await fetchWithoutAuth(`/auth/login`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name, email, password }),
+            body: JSON.stringify({ email, password, name }),
         });
-        let json: any = {};
+        let result: any = {};
         try {
-            json = await response.json();
+            result = await response.json();
         } catch (e) {
             // If response is not JSON, fallback
         }
         if (!response.ok) {
-            const error = json.error || response.statusText || "Signup failed";
+            const error = result.error || response.statusText || "Signup failed";
             throw new Error(error);
         }
-        return json;
+        return result;
     };
 
     const logout = () => {

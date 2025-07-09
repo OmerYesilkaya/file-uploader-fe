@@ -6,12 +6,13 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, File, X } from "lucide-react";
+import { fetchWithFormData } from "@/lib/utils";
 
 interface UploadedFile {
     id: string;
-    name: string;
+    filename: string;
     size: number;
-    type: string;
+    status: string;
     url: string;
 }
 
@@ -57,20 +58,21 @@ export function FileUploader() {
 
         setUploading(true);
 
-        // TODO: Implement actual file upload logic
-        console.log("Uploading files:", files);
+        const formData = new FormData();
 
-        // Mock upload delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        files.forEach((file) => {
+            formData.append("file", file);
+        });
 
-        // Mock successful upload
-        const uploadedFiles: UploadedFile[] = files.map((file, index) => ({
-            id: `file-${Date.now()}-${index}`,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: URL.createObjectURL(file),
-        }));
+        let uploadedFiles: UploadedFile[];
+        try {
+            const response = await fetchWithFormData("/files/upload", formData);
+            uploadedFiles = await response.json();
+        } catch (error) {
+            console.error("Upload failed:", error);
+            setUploading(false);
+            return;
+        }
 
         // Save to localStorage for demo purposes
         const existingUploads = JSON.parse(localStorage.getItem("uploads") || "[]");
@@ -78,8 +80,6 @@ export function FileUploader() {
 
         setFiles([]);
         setUploading(false);
-
-        alert("Files uploaded successfully!");
     };
 
     const formatFileSize = (bytes: number) => {
